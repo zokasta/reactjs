@@ -1,10 +1,10 @@
 import { useState, Fragment } from "react";
-import { addNotification } from "../../../Components/Notification";
+import { addNotification } from "../../Components/Notification/Notification";
 import { IconButton, Tooltip } from "@mui/material";
 
-import Token from "../../../Database/Token";
+import Token from "../../Database/Token";
 
-import Delete from "../../../Assets/SVG/Delete";
+import Delete from "../../Assets/SVG/Delete";
 
 export default function DeletePopup({
   route,
@@ -14,10 +14,8 @@ export default function DeletePopup({
 }) {
   
   const [employee, setEmployee] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const deleteBooking = async () => {
-    setLoading(true);
     try {
       const response = await Token.delete(`${route}${id}/`);
       console.log("Response:", response);
@@ -33,7 +31,6 @@ export default function DeletePopup({
       console.error("Error during API call:", e);
       addNotification("Error", e.message, "danger");
     } finally {
-      setLoading(false);
       onLoading();
     }
   };
@@ -41,7 +38,7 @@ export default function DeletePopup({
   return (
     <Fragment>
       <Tooltip arrow placement="top" title="Details">
-        <IconButton onClick={() => setEmployee(true)}>
+        <IconButton onClick={() => setEmployee(true)} className="w-min">
           <Delete />
         </IconButton>
       </Tooltip>

@@ -1,22 +1,24 @@
-import { useState, Fragment, useEffect } from "react";
-import { addNotification } from "../../../Components/Notification";
+import { useState, Fragment } from "react";
+import { addNotification } from "../../Components/Notification/Notification";
 import { IconButton, Tooltip } from "@mui/material";
 
-import Token from "../../../Database/Token";
-import Edit from "../../../Assets/SVG/Edit";
+import Token from "../../Database/Token";
+import Edit from "../../Assets/SVG/Edit";
 
 export default function EditPopup({
   title = "Enter Title",
   route,
   onLoading = () => {},
-  format = [],
-  data = [],
+  format = [
+    { title: "name", target: "name", type: "text" },
+    { title: "password", target: "password", type: "password" },
+  ],
+  data = [{ name: "User", password: "password" }],
   alert = "row has been updated",
 }) {
   const [active, setActive] = useState(false);
   const [formValue, setFormValue] = useState(data);
 
-  
   const EditFunction = async () => {
     try {
       console.log(formValue);
@@ -40,7 +42,7 @@ export default function EditPopup({
   return (
     <Fragment>
       <Tooltip arrow placement="top" title="Edit">
-        <IconButton className="" onClick={() => setActive(true)}>
+        <IconButton className="w-min" onClick={() => setActive(true)}>
           <Edit />
         </IconButton>
       </Tooltip>

@@ -10,7 +10,7 @@ const Token = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    "ngrok-skip-browser-warning": "69420",zxxzz
+    "ngrok-skip-browser-warning": "69420",
   },
 });
 

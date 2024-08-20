@@ -25,7 +25,6 @@ export default function OTP({ length = 6, onPinSubmit = () => {} }) {
     if (value && index === length - 1) {
       onPinSubmit(joinData);
     }
-    console.log(length);
   };
 
   const handleKeyDown = (index, e) => {
@@ -50,7 +49,7 @@ export default function OTP({ length = 6, onPinSubmit = () => {} }) {
               ref={(input) => (inputRef.current[index] = input)}
               onChange={(e) => handleChange(index, e)}
               onKeyDown={(e) => handleKeyDown(index, e)}
-              className="h-12 outline-orange-500 border-gray-300 rounded-sm mx-[1.5px] text-center border-[2px] float-left w-12 text-lg"
+              className="h-12 outline-orange-500 border-gray-200 rounded-sm mx-[1.5px] text-center border-[2px] float-left w-12 text-lg"
             />
           );
         })}

@@ -1,7 +1,5 @@
 import React from "react";
 import Carousel from "../../../Components/ui/Carousel";
-import Rating from "@mui/material/Rating";
-import ReactMoment from "react-moment";
 import CardSection2 from "./CardSection2";
 import { cards } from "./tempData";
 import AddReviewCard from "./AddReviewCard";

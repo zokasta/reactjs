@@ -28,7 +28,7 @@ export default function Section1() {
   ];
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16">
       {/* Heading */}
       <div className="max-w-3xl mx-auto text-center mb-12 px-4">
         <h2 className="text-4xl font-extrabold text-secondary mb-4">

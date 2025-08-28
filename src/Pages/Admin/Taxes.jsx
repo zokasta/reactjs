@@ -1,110 +1,66 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Edit, Trash2, X, Filter } from "lucide-react";
-
-// Reusable Modal
-function Modal({ isOpen, onClose, children }) {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg relative"
-      >
-        <button
-          className="absolute top-4 right-4 text-gray hover:text-gray-dark"
-          onClick={onClose}
-        >
-          <X size={22} />
-        </button>
-        {children}
-      </motion.div>
-    </div>
-  );
-}
-
-// Tax Table
-function TaxTable({ taxes, onEdit, onDelete }) {
-  return (
-    <div className="overflow-x-auto rounded-xl shadow bg-white">
-      <table className="w-full text-left border-collapse">
-        <thead>
-          <tr className="bg-gray-light text-gray-dark">
-            <th className="p-3">Country</th>
-            <th className="p-3">Tax Name</th>
-            <th className="p-3">Rate (%)</th>
-            <th className="p-3">Type</th>
-            <th className="p-3 text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <AnimatePresence>
-            {taxes.map((tax, i) => (
-              <motion.tr
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="border-b hover:bg-gray-light/40"
-              >
-                <td className="p-3">{tax.country}</td>
-                <td className="p-3">{tax.name}</td>
-                <td className="p-3">{tax.rate}%</td>
-                <td className="p-3">{tax.type}</td>
-                <td className="p-3 flex gap-3 justify-center">
-                  <button
-                    onClick={() => onEdit(i)}
-                    className="text-blue-600 hover:text-blue-800 transition"
-                  >
-                    <Edit size={18} />
-                  </button>
-                  <button
-                    onClick={() => onDelete(i)}
-                    className="text-red-600 hover:text-red-800 transition"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </td>
-              </motion.tr>
-            ))}
-          </AnimatePresence>
-        </tbody>
-      </table>
-    </div>
-  );
-}
+import Button from "../../Components/common/Button";
+import RowsSelector from "../../Components/common/RowsSelector";
+import FilterForm from "../../Components/common/FilterForm";
+import Modal from "../../Components/common/Modal";
+import ActionButtons from "../../Components/common/ActionButtons";
+import ToggleSwitch from "../../Components/common/ToggleSwitch";
 
 export default function AdminTaxes() {
-  const [taxes, setTaxes] = useState([
-    { country: "India", name: "GST", rate: 18, type: "Indirect" },
-    { country: "USA", name: "Sales Tax", rate: 7, type: "Indirect" },
-    { country: "UK", name: "VAT", rate: 20, type: "Indirect" },
-    { country: "Germany", name: "MwSt", rate: 19, type: "Indirect" },
-  ]);
-
+  const [rows, setRows] = useState(5);
+  const [filters, setFilters] = useState({
+    country: "",
+    name: "",
+    rate: "",
+    type: "",
+    active: "",
+  });
+  const [showFilter, setShowFilter] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [confirmDeleteIndex, setConfirmDeleteIndex] = useState(null);
   const [form, setForm] = useState({
     country: "",
     name: "",
     rate: "",
     type: "",
-  });
-  const [editingIndex, setEditingIndex] = useState(null);
-
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-
-  // Filter state
-  const [showFilter, setShowFilter] = useState(false);
-  const [filter, setFilter] = useState({
-    country: "",
-    name: "",
-    rate: "",
-    type: "",
+    active: true,
   });
 
-  // Handle form submit
+  const [taxes, setTaxes] = useState([
+    { country: "India", name: "GST", rate: 18, type: "Indirect", active: true },
+    {
+      country: "USA",
+      name: "Sales Tax",
+      rate: 7,
+      type: "Indirect",
+      active: false,
+    },
+    { country: "UK", name: "VAT", rate: 20, type: "Indirect", active: true },
+    {
+      country: "Germany",
+      name: "MwSt",
+      rate: 19,
+      type: "Indirect",
+      active: true,
+    },
+  ]);
+
+  const filteredTaxes = taxes.filter((tax) => {
+    return (
+      (!filters.country ||
+        tax.country.toLowerCase().includes(filters.country.toLowerCase())) &&
+      (!filters.name ||
+        tax.name.toLowerCase().includes(filters.name.toLowerCase())) &&
+      (!filters.rate || String(tax.rate) === String(filters.rate)) &&
+      (!filters.type ||
+        tax.type.toLowerCase().includes(filters.type.toLowerCase())) &&
+      (!filters.active || String(tax.active) === filters.active)
+    );
+  });
+
+  const visibleTaxes = filteredTaxes.slice(0, rows);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editingIndex !== null) {
@@ -114,7 +70,7 @@ export default function AdminTaxes() {
     } else {
       setTaxes([...taxes, form]);
     }
-    setForm({ country: "", name: "", rate: "", type: "" });
+    setForm({ country: "", name: "", rate: "", type: "", active: true });
     setEditingIndex(null);
     setModalOpen(false);
   };
@@ -125,22 +81,18 @@ export default function AdminTaxes() {
     setModalOpen(true);
   };
 
-  const handleDelete = (index) => {
-    setTaxes(taxes.filter((_, i) => i !== index));
+  const handleDelete = () => {
+    if (confirmDeleteIndex !== null) {
+      setTaxes(taxes.filter((_, i) => i !== confirmDeleteIndex));
+      setConfirmDeleteIndex(null);
+    }
   };
 
-  // Filtering logic (perfect match)
-  const filteredTaxes = taxes.filter((tax) => {
-    return (
-      (!filter.country ||
-        tax.country.toLowerCase() === filter.country.toLowerCase()) &&
-      (!filter.name || tax.name.toLowerCase() === filter.name.toLowerCase()) &&
-      (!filter.rate || String(tax.rate) === String(filter.rate)) &&
-      (!filter.type || tax.type.toLowerCase() === filter.type.toLowerCase())
-    );
-  });
-
-  const visibleTaxes = filteredTaxes.slice(0, rowsPerPage);
+  const handleToggleActive = (index) => {
+    const updated = [...taxes];
+    updated[index].active = !updated[index].active;
+    setTaxes(updated);
+  };
 
   return (
     <div className="space-y-8">
@@ -148,153 +100,167 @@ export default function AdminTaxes() {
 
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-4 justify-between">
-        {/* Show Filters button */}
-        <button
-          onClick={() => setShowFilter(!showFilter)}
-          className="flex items-center gap-2 bg-secondary text-white px-4 py-2 rounded-lg shadow hover:bg-secondary-dark transition"
-        >
+        <Button variant="secondary" onClick={() => setShowFilter(!showFilter)}>
           Show Filters
-        </button>
-
-        {/* Rows dropdown */}
-        <div className="flex items-center gap-2">
-          <label className="text-gray-dark">Rows:</label>
-          <select
-            value={rowsPerPage}
-            onChange={(e) => setRowsPerPage(Number(e.target.value))}
-            className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-          </select>
-        </div>
-
-        {/* Add Tax button */}
-        <button
-          onClick={() => setModalOpen(true)}
-          className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg shadow hover:bg-primary-dark transition"
+        </Button>
+        <RowsSelector value={rows} onChange={setRows} />
+        <Button
+          variant="primary"
+          onClick={() => {
+            setEditingIndex(null);
+            setForm({
+              country: "",
+              name: "",
+              rate: "",
+              type: "",
+              active: true,
+            });
+            setModalOpen(true);
+          }}
         >
-          <Plus size={18} /> Add Tax
-        </button>
+          + Add Tax
+        </Button>
       </div>
 
-      {/* Filter Form (inline, animated) */}
-      <AnimatePresence>
-        {showFilter && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-white rounded-lg shadow p-4 grid gap-4 md:grid-cols-4"
-          >
-            <input
-              type="text"
-              placeholder="Country"
-              value={filter.country}
-              onChange={(e) =>
-                setFilter({ ...filter, country: e.target.value })
-              }
-              className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-            />
-            <input
-              type="text"
-              placeholder="Tax Name"
-              value={filter.name}
-              onChange={(e) => setFilter({ ...filter, name: e.target.value })}
-              className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-            />
-            <input
-              type="number"
-              placeholder="Rate (%)"
-              value={filter.rate}
-              onChange={(e) => setFilter({ ...filter, rate: e.target.value })}
-              className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-            />
-            <input
-              type="text"
-              placeholder="Type (Direct/Indirect)"
-              value={filter.type}
-              onChange={(e) => setFilter({ ...filter, type: e.target.value })}
-              className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-            />
-            <div className="col-span-full flex justify-end gap-3">
-              <button
-                onClick={() =>
-                  setFilter({ country: "", name: "", rate: "", type: "" })
-                }
-                className="px-4 py-2 rounded-lg bg-gray-light hover:bg-gray/30 transition"
-              >
-                Clear
-              </button>
-              <button
-                onClick={() => setShowFilter(false)}
-                className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary-dark transition"
-              >
-                Apply
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Table */}
-      <TaxTable
-        taxes={visibleTaxes}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
+      {/* Filters */}
+      <FilterForm
+        show={showFilter}
+        filters={filters}
+        setFilters={setFilters}
+        fields={[
+          { key: "country", placeholder: "Country" },
+          { key: "name", placeholder: "Tax Name" },
+          { key: "rate", type: "number", placeholder: "Rate (%)" },
+          {
+            key: "type",
+            type: "select",
+            placeholder: "Type",
+            options: [
+              { label: "VAT", value: "vat" },
+              { label: "GST", value: "gst" },
+              { label: "Sales", value: "sales" },
+            ],
+          },
+        ]}
+        onClear={() => setFilters({})}
+        onApply={() => setShowFilter(false)}
       />
 
-      {/* Modal for Add/Edit */}
-      <AnimatePresence>
-        {modalOpen && (
-          <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
-            <h3 className="text-xl font-semibold mb-4">
-              {editingIndex !== null ? "Edit Tax" : "Add Tax"}
-            </h3>
-            <form onSubmit={handleSubmit} className="grid gap-4">
-              <input
-                type="text"
-                placeholder="Country"
-                value={form.country}
-                onChange={(e) => setForm({ ...form, country: e.target.value })}
-                className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Tax Name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-                required
-              />
-              <input
-                type="number"
-                placeholder="Rate (%)"
-                value={form.rate}
-                onChange={(e) => setForm({ ...form, rate: e.target.value })}
-                className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Type (Direct/Indirect)"
-                value={form.type}
-                onChange={(e) => setForm({ ...form, type: e.target.value })}
-                className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-                required
-              />
-              <button
-                type="submit"
-                className="bg-primary text-white px-4 py-2 rounded-lg shadow hover:bg-primary-dark transition"
-              >
-                {editingIndex !== null ? "Update Tax" : "Add Tax"}
-              </button>
-            </form>
-          </Modal>
-        )}
-      </AnimatePresence>
+      {/* ✅ Table with Dummy Data */}
+      <div className="overflow-x-auto rounded-xl shadow bg-white">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-gray-light text-gray-dark">
+              <th className="p-3">Country</th>
+              <th className="p-3">Tax Name</th>
+              <th className="p-3">Rate (%)</th>
+              <th className="p-3">Type</th>
+              <th className="p-3">Status</th>
+              <th className="p-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleTaxes.map((tax, i) => (
+              <tr key={i} className="border-b hover:bg-gray-light/40">
+                <td className="p-3">{tax.country}</td>
+                <td className="p-3">{tax.name}</td>
+                <td className="p-3">{tax.rate}%</td>
+                <td className="p-3">{tax.type}</td>
+                <td className="p-3">
+                  <ToggleSwitch
+                    checked={tax.active}
+                    onChange={() => handleToggleActive(i)}
+                    color="primary"
+                  />
+                </td>
+                <td className="p-3">
+                  <ActionButtons
+                    onEdit={() => handleEdit(i)}
+                    onDelete={() => setConfirmDeleteIndex(i)}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ✅ Modal for Add/Edit */}
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
+        <h3 className="text-xl font-semibold mb-4">
+          {editingIndex !== null ? "Edit Tax" : "Add Tax"}
+        </h3>
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          <input
+            type="text"
+            placeholder="Country"
+            value={form.country}
+            onChange={(e) => setForm({ ...form, country: e.target.value })}
+            className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Tax Name"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
+            required
+          />
+          <input
+            type="number"
+            placeholder="Rate (%)"
+            value={form.rate}
+            onChange={(e) => setForm({ ...form, rate: e.target.value })}
+            className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Type (Direct/Indirect)"
+            value={form.type}
+            onChange={(e) => setForm({ ...form, type: e.target.value })}
+            className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
+            required
+          />
+
+          {/* ✅ Active / Inactive Toggle */}
+          <label className="flex items-center gap-3">
+            <span className="text-gray-700">Active:</span>
+            <input
+              type="checkbox"
+              checked={form.active}
+              onChange={(e) => setForm({ ...form, active: e.target.checked })}
+              className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary"
+            />
+          </label>
+
+          <Button type="submit" variant="primary">
+            {editingIndex !== null ? "Update Tax" : "Add Tax"}
+          </Button>
+        </form>
+      </Modal>
+
+      {/* ✅ Confirmation Delete Modal */}
+      <Modal
+        isOpen={confirmDeleteIndex !== null}
+        onClose={() => setConfirmDeleteIndex(null)}
+      >
+        <h3 className="text-lg font-semibold mb-4">Are you sure?</h3>
+        <p className="text-gray-600 mb-6">
+          Do you really want to delete{" "}
+          <span className="font-medium">{taxes[confirmDeleteIndex]?.name}</span>
+          ? This action cannot be undone.
+        </p>
+        <div className="flex justify-end gap-3">
+          <Button variant="light" onClick={() => setConfirmDeleteIndex(null)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDelete}>
+            Yes, Delete
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

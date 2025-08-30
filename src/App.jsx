@@ -43,6 +43,7 @@ import EmpLeads from "./Pages/Employee/Leads";
 import EmpReports from "./Pages/Employee/Reports";
 import EmpPayments from "./Pages/Employee/Payments";
 import EmpTickets from "./Pages/Employee/Tickets";
+import AboutUs from "./Pages/About Us/AboutUs";
 
 export default function App() {
   return (
@@ -50,6 +51,7 @@ export default function App() {
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
       <Route path="/home" element={<Home />} />
+      <Route path="/about-us" element={<AboutUs />} />
       <Route path="/create-account" element={<CreateAccount />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/login" element={<LoginUser />} />
@@ -76,7 +78,7 @@ export default function App() {
         <Route path="employees" element={<AdminEmployees />} />
         <Route path="payments" element={<AdminPayments />} />
         <Route path="banks" element={<AdminBanks />} />
-        <Route path="pages" element={<AdminPages />} />
+        <Route path="ticket" element={<AdminPages />} />
       </Route>
 
       {/* Developer */}

@@ -1,111 +1,54 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Edit, Trash2, X } from "lucide-react";
+import Button from "../../Components/common/Button";
+import RowsSelector from "../../Components/common/RowsSelector";
+import FilterForm from "../../Components/common/FilterForm";
+import Modal from "../../Components/common/Modal";
+import ActionButtons from "../../Components/common/ActionButtons";
 
-// Reusable Modal
-function Modal({ isOpen, onClose, children }) {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg relative"
-      >
-        <button
-          className="absolute top-4 right-4 text-gray hover:text-gray-dark"
-          onClick={onClose}
-        >
-          <X size={22} />
-        </button>
-        {children}
-      </motion.div>
-    </div>
-  );
-}
+export default function InvoicesAdmin() {
+  const [rows, setRows] = useState(5);
+  const [filters, setFilters] = useState({
+    customer: "",
+    number: "",
+    amount: "",
+    status: "",
+  });
+  const [showFilter, setShowFilter] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [form, setForm] = useState({
+    customer: "",
+    number: "",
+    amount: "",
+    status: "Draft",
+  });
 
-// Invoice Table
-function InvoiceTable({ invoices, onEdit, onDelete }) {
-  return (
-    <div className="overflow-x-auto rounded-xl shadow bg-white">
-      <table className="w-full text-left border-collapse">
-        <thead>
-          <tr className="bg-gray-light text-gray-dark">
-            <th className="p-3">Invoice ID</th>
-            <th className="p-3">Customer</th>
-            <th className="p-3">Amount</th>
-            <th className="p-3">Status</th>
-            <th className="p-3 text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <AnimatePresence>
-            {invoices.map((inv, i) => (
-              <motion.tr
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="border-b hover:bg-gray-light/40"
-              >
-                <td className="p-3 font-medium">{inv.id}</td>
-                <td className="p-3">{inv.customer}</td>
-                <td className="p-3">{inv.amount}</td>
-                <td className="p-3">
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium
-                      ${
-                        inv.status === "Paid"
-                          ? "bg-green-100 text-green-700"
-                          : inv.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                  >
-                    {inv.status}
-                  </span>
-                </td>
-                <td className="p-3 flex gap-3 justify-center">
-                  <button
-                    onClick={() => onEdit(i)}
-                    className="text-blue-600 hover:text-blue-800 transition"
-                  >
-                    <Edit size={18} />
-                  </button>
-                  <button
-                    onClick={() => onDelete(i)}
-                    className="text-red-600 hover:text-red-800 transition"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </td>
-              </motion.tr>
-            ))}
-          </AnimatePresence>
-        </tbody>
-      </table>
-    </div>
-  );
-}
+  const [statusPopup, setStatusPopup] = useState(null);
+  const [confirmDeleteIndex, setConfirmDeleteIndex] = useState(null);
 
-export default function Invoices() {
   const [invoices, setInvoices] = useState([
-    { id: "#INV001", customer: "John Doe", amount: "$1200", status: "Paid" },
-    { id: "#INV002", customer: "Jane Smith", amount: "$850", status: "Pending" },
-    { id: "#INV003", customer: "Michael Lee", amount: "$3000", status: "Paid" },
-    { id: "#INV004", customer: "Sarah Kim", amount: "$2100", status: "Overdue" },
+    { customer: "John Doe", number: "INV-001", amount: 1200, status: "Pending" },
+    { customer: "Alice Smith", number: "INV-002", amount: 500, status: "Draft" },
+    { customer: "Mega Corp", number: "INV-003", amount: 2500, status: "Paid" },
+    { customer: "Tech Labs", number: "INV-004", amount: 800, status: "Overdue" },
   ]);
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState({ id: "", customer: "", amount: "", status: "" });
-  const [editingIndex, setEditingIndex] = useState(null);
+  const statuses = ["Draft", "Pending", "Paid", "Overdue", "Cancelled"];
 
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [filters, setFilters] = useState({ customer: "", status: "", amount: "" });
+  const filteredInvoices = invoices.filter((inv) => {
+    return (
+      (!filters.customer ||
+        inv.customer.toLowerCase().includes(filters.customer.toLowerCase())) &&
+      (!filters.number ||
+        inv.number.toLowerCase().includes(filters.number.toLowerCase())) &&
+      (!filters.amount || String(inv.amount) === String(filters.amount)) &&
+      (!filters.status ||
+        inv.status.toLowerCase().includes(filters.status.toLowerCase()))
+    );
+  });
 
-  // Handle form submit
+  const visibleInvoices = filteredInvoices.slice(0, rows);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editingIndex !== null) {
@@ -115,7 +58,7 @@ export default function Invoices() {
     } else {
       setInvoices([...invoices, form]);
     }
-    setForm({ id: "", customer: "", amount: "", status: "" });
+    setForm({ customer: "", number: "", amount: "", status: "Draft" });
     setEditingIndex(null);
     setModalOpen(false);
   };
@@ -126,21 +69,19 @@ export default function Invoices() {
     setModalOpen(true);
   };
 
-  const handleDelete = (index) => {
-    setInvoices(invoices.filter((_, i) => i !== index));
+  const handleDelete = () => {
+    if (confirmDeleteIndex !== null) {
+      setInvoices(invoices.filter((_, i) => i !== confirmDeleteIndex));
+      setConfirmDeleteIndex(null);
+    }
   };
 
-  // Apply filters
-  const filteredInvoices = invoices.filter((inv) => {
-    return (
-      (filters.customer === "" ||
-        inv.customer.toLowerCase().includes(filters.customer.toLowerCase())) &&
-      (filters.status === "" || inv.status === filters.status) &&
-      (filters.amount === "" || inv.amount.includes(filters.amount))
-    );
-  });
-
-  const visibleInvoices = filteredInvoices.slice(0, rowsPerPage);
+  const handleChangeStatus = (index, newStatus) => {
+    const updated = [...invoices];
+    updated[index].status = newStatus;
+    setInvoices(updated);
+    setStatusPopup(null);
+  };
 
   return (
     <div className="space-y-8">
@@ -148,139 +89,181 @@ export default function Invoices() {
 
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-4 justify-between">
-        <button
-          onClick={() => setFilterOpen(!filterOpen)}
-          className="flex items-center gap-2 bg-secondary text-white px-4 py-2 rounded-lg shadow hover:bg-secondary-dark transition"
-        >
+        <Button variant="secondary" onClick={() => setShowFilter(!showFilter)}>
           Show Filters
-        </button>
-
-        <div className="flex items-center gap-2">
-          <label className="text-gray-dark">Rows:</label>
-          <select
-            value={rowsPerPage}
-            onChange={(e) => setRowsPerPage(Number(e.target.value))}
-            className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-          </select>
-        </div>
-
-        <button
-          onClick={() => setModalOpen(true)}
-          className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg shadow hover:bg-primary-dark transition"
-        >
-          <Plus size={18} /> Add Invoice
-        </button>
+        </Button>
+        <RowsSelector value={rows} onChange={setRows} />
+        <Button variant="primary" onClick={() => setModalOpen(true)}>
+          + Add Invoice
+        </Button>
       </div>
 
-      {/* Filters form */}
-      <AnimatePresence>
-        {filterOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="bg-white p-4 rounded-xl shadow space-y-4"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <input
-                type="text"
-                placeholder="Customer"
-                value={filters.customer}
-                onChange={(e) =>
-                  setFilters({ ...filters, customer: e.target.value })
-                }
-                className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-              />
-              <select
-                value={filters.status}
-                onChange={(e) =>
-                  setFilters({ ...filters, status: e.target.value })
-                }
-                className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-              >
-                <option value="">All Status</option>
-                <option value="Paid">Paid</option>
-                <option value="Pending">Pending</option>
-                <option value="Overdue">Overdue</option>
-              </select>
-              <input
-                type="text"
-                placeholder="Amount"
-                value={filters.amount}
-                onChange={(e) =>
-                  setFilters({ ...filters, amount: e.target.value })
-                }
-                className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Table */}
-      <InvoiceTable
-        invoices={visibleInvoices}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
+      {/* Filters */}
+      <FilterForm
+        show={showFilter}
+        filters={filters}
+        setFilters={setFilters}
+        fields={[
+          { key: "customer", placeholder: "Customer" },
+          { key: "number", placeholder: "Invoice #" },
+          { key: "amount", type: "number", placeholder: "Amount" },
+          {
+            key: "status",
+            type: "select",
+            placeholder: "Status",
+            options: statuses.map((s) => ({ label: s, value: s })),
+          },
+        ]}
+        onClear={() => setFilters({})}
+        onApply={() => setShowFilter(false)}
       />
 
-      {/* Modal for Add/Edit */}
-      <AnimatePresence>
-        {modalOpen && (
-          <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
-            <h3 className="text-xl font-semibold mb-4">
-              {editingIndex !== null ? "Edit Invoice" : "Add Invoice"}
-            </h3>
-            <form onSubmit={handleSubmit} className="grid gap-4">
-              <input
-                type="text"
-                placeholder="Invoice ID"
-                value={form.id}
-                onChange={(e) => setForm({ ...form, id: e.target.value })}
-                className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Customer"
-                value={form.customer}
-                onChange={(e) => setForm({ ...form, customer: e.target.value })}
-                className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Amount"
-                value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-                required
-              />
-              <select
-                value={form.status}
-                onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-                required
-              >
-                <option value="">Select Status</option>
-                <option value="Paid">Paid</option>
-                <option value="Pending">Pending</option>
-                <option value="Overdue">Overdue</option>
-              </select>
-              <button
-                type="submit"
-                className="bg-primary text-white px-4 py-2 rounded-lg shadow hover:bg-primary-dark transition"
-              >
-                {editingIndex !== null ? "Update Invoice" : "Add Invoice"}
-              </button>
-            </form>
-          </Modal>
-        )}
-      </AnimatePresence>
+      {/* Table */}
+      <div className="overflow-x-auto rounded-xl shadow bg-white">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-gray-light text-gray-dark">
+              <th className="p-3">Customer</th>
+              <th className="p-3">Invoice #</th>
+              <th className="p-3">Amount</th>
+              <th className="p-3">Status</th>
+              <th className="p-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleInvoices.map((inv, i) => (
+              <tr key={i} className="border-b hover:bg-gray-light/40 relative">
+                <td className="p-3">{inv.customer}</td>
+                <td className="p-3">{inv.number}</td>
+                <td className="p-3">₹{inv.amount}</td>
+                <td className="p-3 relative">
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm cursor-pointer ${
+                      inv.status === "Paid"
+                        ? "bg-green-100 text-green-700"
+                        : inv.status === "Pending"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : inv.status === "Overdue"
+                        ? "bg-red-100 text-red-700"
+                        : inv.status === "Cancelled"
+                        ? "bg-gray-300 text-gray-700"
+                        : "bg-blue-100 text-blue-700"
+                    }`}
+                    onClick={() =>
+                      setStatusPopup(statusPopup === i ? null : i)
+                    }
+                  >
+                    {inv.status}
+                  </span>
+
+                  {/* Status popup */}
+                  {statusPopup === i && (
+                    <div className="absolute top-full left-0 mt-2 bg-white border rounded-lg shadow-lg p-2 z-50 w-40">
+                      {statuses.map((s) => (
+                        <div
+                          key={s}
+                          onClick={() => handleChangeStatus(i, s)}
+                          className={`px-3 py-1 cursor-pointer rounded mb-1 last:mb-0 
+                            ${
+                              s === "Paid"
+                                ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                : s === "Pending"
+                                ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                                : s === "Overdue"
+                                ? "bg-red-100 text-red-700 hover:bg-red-200"
+                                : s === "Cancelled"
+                                ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                            }`}
+                        >
+                          {s}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </td>
+
+                <td className="p-3">
+                  <ActionButtons
+                    onEdit={() => handleEdit(i)}
+                    onDelete={() => setConfirmDeleteIndex(i)}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Modal Add/Edit Invoice */}
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
+        <h3 className="text-xl font-semibold mb-4">
+          {editingIndex !== null ? "Edit Invoice" : "Add Invoice"}
+        </h3>
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          <input
+            type="text"
+            placeholder="Customer"
+            value={form.customer}
+            onChange={(e) => setForm({ ...form, customer: e.target.value })}
+            className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Invoice #"
+            value={form.number}
+            onChange={(e) => setForm({ ...form, number: e.target.value })}
+            className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
+            required
+          />
+          <input
+            type="number"
+            placeholder="Amount"
+            value={form.amount}
+            onChange={(e) => setForm({ ...form, amount: e.target.value })}
+            className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
+            required
+          />
+          <select
+            value={form.status}
+            onChange={(e) => setForm({ ...form, status: e.target.value })}
+            className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
+          >
+            {statuses.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+          <Button type="submit" variant="primary">
+            {editingIndex !== null ? "Update Invoice" : "Add Invoice"}
+          </Button>
+        </form>
+      </Modal>
+
+      {/* ✅ Confirmation Delete Modal */}
+      <Modal
+        isOpen={confirmDeleteIndex !== null}
+        onClose={() => setConfirmDeleteIndex(null)}
+      >
+        <h3 className="text-lg font-semibold mb-4">Are you sure?</h3>
+        <p className="text-gray-600 mb-6">
+          Do you really want to delete{" "}
+          <span className="font-medium">
+            {invoices[confirmDeleteIndex]?.number}
+          </span>
+          ? This action cannot be undone.
+        </p>
+        <div className="flex justify-end gap-3">
+          <Button variant="light" onClick={() => setConfirmDeleteIndex(null)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDelete}>
+            Yes, Delete
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

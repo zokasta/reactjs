@@ -36,7 +36,7 @@ export default function DashboardLayout({ role }) {
       { name: "Employees", path: "employees", icon: <Users size={18} /> },
       { name: "Payments", path: "payments", icon: <CreditCard size={18} /> },
       { name: "Banks", path: "banks", icon: <Building2 size={18} /> },
-      { name: "Pages", path: "pages", icon: <Layers size={18} /> },
+      { name: "Ticket", path: "ticket", icon: <Layers size={18} /> },
     ],
     developer: [
       { name: "API Calls", path: "api-calls", icon: <Code size={18} /> },

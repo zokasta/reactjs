@@ -1,164 +1,122 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Plus, X, Phone, Mail, UserPlus, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import Modal from "../../Components/common/Modal";
+import RowsSelector from "../../Components/common/RowsSelector";
+import FilterForm from "../../Components/common/FilterForm";
+import ActionButtons from "../../Components/common/ActionButtons";
+import Button from "../../Components/common/Button";
 
-// Reusable Modal
-function Modal({ isOpen, onClose, children }) {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg relative"
-      >
-        <button
-          className="absolute top-4 right-4 text-gray hover:text-gray-dark"
-          onClick={onClose}
-        >
-          <X size={22} />
-        </button>
-        {children}
-      </motion.div>
-    </div>
-  );
-}
+// MUI Icons
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import PhoneIcon from "@mui/icons-material/Phone";
+import EmailIcon from "@mui/icons-material/Email";
+import AddIcon from "@mui/icons-material/Add";
 
-function LeadTable({ leads, onDetails, onConvert }) {
-  return (
-    <div className="overflow-x-auto rounded-xl shadow bg-white">
-      <table className="w-full text-left border-collapse">
-        <thead>
-          <tr className="bg-gray-light text-gray-dark">
-            <th className="p-3">Name</th>
-            <th className="p-3">Email</th>
-            <th className="p-3">Phone</th>
-            <th className="p-3">Status</th>
-            <th className="p-3 text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <AnimatePresence>
-            {leads.map((lead, i) => (
-              <motion.tr
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="border-b hover:bg-gray-light/40"
-              >
-                <td className="p-3 font-medium">{lead.name}</td>
-                <td className="p-3">{lead.email}</td>
-                <td className="p-3">{lead.phone}</td>
-                <td className="p-3">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      lead.status === "New"
-                        ? "bg-blue-100 text-blue-700"
-                        : lead.status === "Contacted"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-green-100 text-green-700"
-                    }`}
-                  >
-                    {lead.status}
-                  </span>
-                </td>
-                <td className="p-3 flex gap-3 justify-center flex-wrap">
-                  {/* Details */}
-                  <button
-                    onClick={() => onDetails(lead)}
-                    className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
-                  >
-                    <Eye size={16} /> Details
-                  </button>
+export default function AdminLeads() {
+  const navigate = useNavigate();
 
-                  {/* Call */}
-                  <a
-                    href={`tel:${lead.phone}`}
-                    className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition"
-                  >
-                    <Phone size={16} /> Call
-                  </a>
+  const [rows, setRows] = useState(5);
+  const [showFilter, setShowFilter] = useState(false);
+  const [filters, setFilters] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+  });
+  const [selectedLead, setSelectedLead] = useState(null);
+  const [confirmDeleteIndex, setConfirmDeleteIndex] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newLead, setNewLead] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+    status: "Draft",
+    remarks: "",
+  });
 
-                  {/* Email */}
-                  <a
-                    href={`mailto:${lead.email}`}
-                    className="flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition"
-                  >
-                    <Mail size={16} /> Email
-                  </a>
-
-                  {/* Convert */}
-                  <button
-                    onClick={() => onConvert(lead)}
-                    className="flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition"
-                  >
-                    <UserPlus size={16} /> Convert
-                  </button>
-                </td>
-              </motion.tr>
-            ))}
-          </AnimatePresence>
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-export default function Leads() {
   const [leads, setLeads] = useState([
     {
       id: 1,
-      name: "Arjun Mehta",
-      email: "arjun@example.com",
-      phone: "+91-9876543210",
-      status: "New",
-      notes: "Interested in enterprise plan. Reached via LinkedIn.",
+      name: "John Doe",
+      email: "john@example.com",
+      phone: "+911234567890",
+      company: "ABC Pvt Ltd",
+      status: "Draft",
+      remarks: "Initial contact made.",
     },
     {
       id: 2,
-      name: "Sophia Brown",
-      email: "sophia@example.com",
-      phone: "+1-202-555-0144",
-      status: "Contacted",
-      notes: "Asked for proposal. Wants quarterly billing.",
+      name: "Jane Smith",
+      email: "jane@example.com",
+      phone: "+911098765432",
+      company: "XYZ Corp",
+      status: "Pending",
+      remarks: "Waiting for response.",
     },
     {
       id: 3,
-      name: "Liam Chen",
-      email: "liam@example.com",
-      phone: "+44-7700-123456",
-      status: "Converted",
-      notes: "Now a paying customer since last week.",
+      name: "Alice Johnson",
+      email: "alice@example.com",
+      phone: "+911112223334",
+      company: "Acme Inc",
+      status: "Paid",
+      remarks: "",
     },
   ]);
 
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [filters, setFilters] = useState({ name: "", status: "" });
-
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedLead, setSelectedLead] = useState(null);
-
-  // Filters
-  const filteredLeads = leads.filter(
-    (l) =>
-      (filters.name === "" ||
-        l.name.toLowerCase().includes(filters.name.toLowerCase())) &&
-      (filters.status === "" ||
-        l.status.toLowerCase().includes(filters.status.toLowerCase()))
-  );
-
-  const visibleLeads = filteredLeads.slice(0, rowsPerPage);
-
-  // Convert lead
-  const handleConvert = (lead) => {
-    setLeads((prev) =>
-      prev.map((l) =>
-        l.id === lead.id ? { ...l, status: "Converted" } : l
-      )
+  const filteredLeads = leads.filter((lead) => {
+    return (
+      (!filters.name ||
+        lead.name.toLowerCase().includes(filters.name.toLowerCase())) &&
+      (!filters.email ||
+        lead.email.toLowerCase().includes(filters.email.toLowerCase())) &&
+      (!filters.phone ||
+        lead.phone.toLowerCase().includes(filters.phone.toLowerCase())) &&
+      (!filters.company ||
+        lead.company.toLowerCase().includes(filters.company.toLowerCase()))
     );
+  });
+
+  const visibleLeads = filteredLeads.slice(0, rows);
+
+  const handleDelete = () => {
+    if (confirmDeleteIndex !== null) {
+      setLeads(leads.filter((_, i) => i !== confirmDeleteIndex));
+      setConfirmDeleteIndex(null);
+    }
+  };
+
+  const handleUpdateStatus = (status) => {
+    if (selectedLead !== null) {
+      const updated = leads.map((lead) =>
+        lead.id === selectedLead.id ? { ...lead, status } : lead
+      );
+      setLeads(updated);
+      setSelectedLead({ ...selectedLead, status });
+    }
+  };
+
+  const handleAddLead = () => {
+    const id = leads.length ? Math.max(...leads.map((l) => l.id)) + 1 : 1;
+    setLeads([...leads, { ...newLead, id }]);
+    setNewLead({
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
+      status: "Draft",
+      remarks: "",
+    });
+    setShowAddModal(false);
+  };
+
+  const statusColors = {
+    Draft: "bg-gray-200 text-gray-700",
+    Pending: "bg-yellow-200 text-yellow-700",
+    Paid: "bg-green-200 text-green-700",
+    Lost: "bg-red-200 text-red-700",
+    FollowUp: "bg-blue-200 text-blue-700",
   };
 
   return (
@@ -167,105 +125,247 @@ export default function Leads() {
 
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-4 justify-between">
-        <button
-          onClick={() => setFilterOpen(!filterOpen)}
-          className="flex items-center gap-2 bg-secondary text-white px-4 py-2 rounded-lg shadow hover:bg-secondary-dark transition"
-        >
-          Show Filters
-        </button>
-
-        <div className="flex items-center gap-2">
-          <label className="text-gray-dark">Rows:</label>
-          <select
-            value={rowsPerPage}
-            onChange={(e) => setRowsPerPage(Number(e.target.value))}
-            className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-          </select>
+        <div className="flex gap-3">
+          <Button variant="secondary" onClick={() => setShowFilter(!showFilter)}>
+            Show Filters
+          </Button>
+          <Button variant="primary" onClick={() => setShowAddModal(true)}>
+            <AddIcon fontSize="small" className="mr-1" /> Add Lead
+          </Button>
         </div>
-
-        <button
-          onClick={() => alert("Add Lead modal coming soon!")}
-          className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg shadow hover:bg-primary-dark transition"
-        >
-          <Plus size={18} /> Add Lead
-        </button>
+        <RowsSelector value={rows} onChange={setRows} />
       </div>
 
-      {/* Filters form */}
-      <AnimatePresence>
-        {filterOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="bg-white p-4 rounded-xl shadow space-y-4"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                type="text"
-                placeholder="Search Name"
-                value={filters.name}
-                onChange={(e) =>
-                  setFilters({ ...filters, name: e.target.value })
-                }
-                className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-              />
-              <select
-                value={filters.status}
-                onChange={(e) =>
-                  setFilters({ ...filters, status: e.target.value })
-                }
-                className="border rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none"
-              >
-                <option value="">All Status</option>
-                <option value="New">New</option>
-                <option value="Contacted">Contacted</option>
-                <option value="Converted">Converted</option>
-              </select>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Table */}
-      <LeadTable
-        leads={visibleLeads}
-        onDetails={(lead) => {
-          setSelectedLead(lead);
-          setModalOpen(true);
-        }}
-        onConvert={handleConvert}
+      {/* Filters */}
+      <FilterForm
+        show={showFilter}
+        filters={filters}
+        setFilters={setFilters}
+        fields={[
+          { key: "name", placeholder: "Lead Name" },
+          { key: "email", placeholder: "Email" },
+          { key: "phone", placeholder: "Phone" },
+          { key: "company", placeholder: "Company" },
+        ]}
+        onClear={() => setFilters({})}
+        onApply={() => setShowFilter(false)}
       />
 
-      {/* Details Modal */}
-      <AnimatePresence>
-        {modalOpen && selectedLead && (
-          <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
+      {/* Table */}
+      <div className="overflow-x-auto rounded-xl shadow bg-white">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-gray-light text-gray-dark">
+              <th className="p-3">Name</th>
+              <th className="p-3">Email</th>
+              <th className="p-3">Phone</th>
+              <th className="p-3">Company</th>
+              <th className="p-3">Status</th>
+              <th className="p-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleLeads.map((lead, i) => (
+              <tr key={lead.id} className="border-b hover:bg-gray-light/40">
+                <td className="p-3">{lead.name}</td>
+                <td className="p-3">{lead.email}</td>
+                <td className="p-3">{lead.phone}</td>
+                <td className="p-3">{lead.company}</td>
+                <td className="p-3">
+                  <button
+                    onClick={() => setSelectedLead(lead)}
+                    className={`px-2 py-1 rounded-md text-sm font-medium ${statusColors[lead.status]}`}
+                  >
+                    {lead.status}
+                  </button>
+                </td>
+                <td className="p-3 flex gap-2 justify-center flex-wrap">
+                  {/* Default Edit/Delete */}
+                  <ActionButtons
+                    onEdit={() => setSelectedLead(lead)}
+                    onDelete={() => setConfirmDeleteIndex(i)}
+                  />
+                  {/* Custom Buttons */}
+                  <button
+                    onClick={() => setSelectedLead(lead)}
+                    className="p-2 bg-blue-100 rounded-md hover:bg-blue-200 transition text-blue-500"
+                    title="Details"
+                  >
+                    <InfoOutlinedIcon fontSize="small" />
+                  </button>
+                  <button
+                    onClick={() => window.open(`tel:${lead.phone}`)}
+                    className="p-2 bg-green-100 rounded-md hover:bg-green-200 transition text-green-500"
+                    title="Call"
+                  >
+                    <PhoneIcon fontSize="small" />
+                  </button>
+                  <button
+                    onClick={() => window.open(`mailto:${lead.email}`)}
+                    className="p-2 bg-purple-100 rounded-md hover:bg-purple-200 transition text-purple-500"
+                    title="Email"
+                  >
+                    <EmailIcon fontSize="small" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Lead Details & Status Modal */}
+      <Modal
+        isOpen={selectedLead !== null}
+        onClose={() => setSelectedLead(null)}
+      >
+        {selectedLead && (
+          <>
             <h3 className="text-xl font-semibold mb-4">Lead Details</h3>
             <div className="space-y-2">
               <p>
-                <strong>Name:</strong> {selectedLead.name}
+                <span className="font-medium">Name:</span> {selectedLead.name}
               </p>
               <p>
-                <strong>Email:</strong> {selectedLead.email}
+                <span className="font-medium">Email:</span> {selectedLead.email}
               </p>
               <p>
-                <strong>Phone:</strong> {selectedLead.phone}
+                <span className="font-medium">Phone:</span> {selectedLead.phone}
               </p>
               <p>
-                <strong>Status:</strong> {selectedLead.status}
+                <span className="font-medium">Company:</span> {selectedLead.company}
               </p>
               <p>
-                <strong>Notes:</strong> {selectedLead.notes}
+                <span className="font-medium">Status:</span>
+                <select
+                  value={selectedLead.status}
+                  onChange={(e) => handleUpdateStatus(e.target.value)}
+                  className="ml-2 border rounded-md px-2 py-1 focus:ring-2 focus:ring-primary outline-none"
+                >
+                  {Object.keys(statusColors).map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
               </p>
+              <p>
+                <span className="font-medium">Remarks:</span>
+              </p>
+              <textarea
+                value={selectedLead.remarks}
+                onChange={(e) =>
+                  setSelectedLead({ ...selectedLead, remarks: e.target.value })
+                }
+                rows={6}
+                className="w-full border rounded-md p-2 focus:ring-2 focus:ring-primary outline-none resize-none"
+              ></textarea>
             </div>
-          </Modal>
+            <div className="flex justify-end mt-4 gap-2">
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setLeads(
+                    leads.map((lead) =>
+                      lead.id === selectedLead.id ? selectedLead : lead
+                    )
+                  );
+                  setSelectedLead(null);
+                }}
+              >
+                Save
+              </Button>
+              <Button variant="light" onClick={() => setSelectedLead(null)}>
+                Close
+              </Button>
+            </div>
+          </>
         )}
-      </AnimatePresence>
+      </Modal>
+
+      {/* Add Lead Modal */}
+      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)}>
+        <h3 className="text-xl font-semibold mb-4">Add New Lead</h3>
+        <div className="space-y-3">
+          <input
+            type="text"
+            placeholder="Name"
+            value={newLead.name}
+            onChange={(e) => setNewLead({ ...newLead, name: e.target.value })}
+            className="w-full border rounded-md p-2"
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            value={newLead.email}
+            onChange={(e) => setNewLead({ ...newLead, email: e.target.value })}
+            className="w-full border rounded-md p-2"
+          />
+          <input
+            type="tel"
+            placeholder="Phone"
+            value={newLead.phone}
+            onChange={(e) => setNewLead({ ...newLead, phone: e.target.value })}
+            className="w-full border rounded-md p-2"
+          />
+          <input
+            type="text"
+            placeholder="Company"
+            value={newLead.company}
+            onChange={(e) => setNewLead({ ...newLead, company: e.target.value })}
+            className="w-full border rounded-md p-2"
+          />
+          <select
+            value={newLead.status}
+            onChange={(e) => setNewLead({ ...newLead, status: e.target.value })}
+            className="w-full border rounded-md p-2"
+          >
+            {Object.keys(statusColors).map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+          <textarea
+            placeholder="Remarks"
+            value={newLead.remarks}
+            onChange={(e) => setNewLead({ ...newLead, remarks: e.target.value })}
+            rows={4}
+            className="w-full border rounded-md p-2 resize-none"
+          ></textarea>
+        </div>
+        <div className="flex justify-end mt-4 gap-2">
+          <Button variant="light" onClick={() => setShowAddModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleAddLead}>
+            Add Lead
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={confirmDeleteIndex !== null}
+        onClose={() => setConfirmDeleteIndex(null)}
+      >
+        <h3 className="text-lg font-semibold mb-4">Are you sure?</h3>
+        <p className="text-gray-600 mb-6">
+          Do you really want to delete{" "}
+          <span className="font-medium">
+            {leads[confirmDeleteIndex]?.name}
+          </span>
+          ? This action cannot be undone.
+        </p>
+        <div className="flex justify-end gap-3">
+          <Button variant="light" onClick={() => setConfirmDeleteIndex(null)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDelete}>
+            Yes, Delete
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
